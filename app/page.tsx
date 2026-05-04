@@ -1,26 +1,45 @@
 "use client";
 
-import { useState } from "react";
-import { ScrollCanvas } from "@/components/ScrollCanvas";
-import { TextOverlay } from "@/components/TextOverlay";
-import { Navbar } from "@/components/Navbar";
+import { useRef, useState } from "react";
+import { VideoCanvas }     from "@/components/VideoCanvas";
+import { VideoTransition } from "@/components/VideoTransition";
+import { TextOverlay }     from "@/components/TextOverlay";
+import { Navbar }          from "@/components/Navbar";
 
 export default function Home() {
-  const [isReady, setIsReady] = useState(false);
+  const sodamaxRef = useRef<HTMLElement>(null);
+  const moninRef   = useRef<HTMLElement>(null);
+
+  const [sodamaxReady, setSodamaxReady] = useState(false);
 
   return (
-    <main className="relative w-full bg-bg-deep">
+    <main className="relative w-full bg-[#050301]">
       <Navbar />
 
-      {/* Scroll canvas container - sticky */}
-      <ScrollCanvas onLoadComplete={() => setIsReady(true)} />
+      {/* ── SodaMax video section ─────────────────────── */}
+      <section ref={sodamaxRef} className="relative h-[350vh]">
+        <VideoCanvas
+          framesPath="/frames"
+          totalFrames={240}
+          extension="webp"
+          sectionRef={sodamaxRef}
+          onLoadComplete={() => setSodamaxReady(true)}
+        />
+        {sodamaxReady && <TextOverlay sectionRef={sodamaxRef} />}
+      </section>
 
-      {/* Text overlays with Framer Motion */}
-      {isReady && <TextOverlay />}
+      {/* ── Cinematic transition ──────────────────────── */}
+      <VideoTransition />
 
-      {/* Scrollable content area - 500vh height */}
-      <div className="relative h-[500vh] bg-bg-deep pointer-events-none" />
+      {/* ── Monin video section ───────────────────────── */}
+      <section ref={moninRef} className="relative h-[350vh]">
+        <VideoCanvas
+          framesPath="/frames-monin"
+          totalFrames={240}
+          extension="jpg"
+          sectionRef={moninRef}
+        />
+      </section>
     </main>
   );
 }
-

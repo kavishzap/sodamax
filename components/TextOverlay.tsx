@@ -1,49 +1,55 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import { RefObject, useEffect } from "react";
+import { motion, useMotionValue, useTransform } from "framer-motion";
+import { useSectionScroll } from "@/hooks/useSectionScroll";
 
 const words = ["Sparkle.", "Refined.", "Perfect."];
 
 const container = {
   hidden: {},
   show: {
-    transition: {
-      staggerChildren: 0.22,
-      delayChildren: 0.1,
-    },
+    transition: { staggerChildren: 0.22, delayChildren: 0.1 },
   },
 };
 
 const wordVariant = {
   hidden: { opacity: 0, y: 48, filter: "blur(12px)" },
   show: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] },
+    opacity: 1, y: 0, filter: "blur(0px)",
+    transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
   },
 };
 
-export function TextOverlay() {
-  const { scrollYProgress } = useScroll();
+interface TextOverlayProps {
+  sectionRef: RefObject<HTMLElement | null>;
+}
 
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.25, 0.35], [1, 1, 0]);
+export function TextOverlay({ sectionRef }: TextOverlayProps) {
+  const rawProgress = useSectionScroll(sectionRef);
 
-  const splashOpacity = useTransform(scrollYProgress, [0.3, 0.35, 0.65, 0.72], [0, 1, 1, 0]);
-  const splashScale   = useTransform(scrollYProgress, [0.3, 0.35, 0.65], [0.9, 1, 1]);
-  const splashY       = useTransform(scrollYProgress, [0.3, 0.35, 0.65], [30, 0, 0], { clamp: true });
+  // Feed raw number into a MotionValue so useTransform can react to it
+  const scrollYProgress = useMotionValue(rawProgress);
+  useEffect(() => { scrollYProgress.set(rawProgress); }, [rawProgress, scrollYProgress]);
 
-  const reverseOpacity = useTransform(scrollYProgress, [0.7, 0.75, 0.9, 1], [0, 1, 1, 0]);
-  const reverseScale   = useTransform(scrollYProgress, [0.7, 0.75, 0.9], [0.95, 1, 1]);
-  const reverseY       = useTransform(scrollYProgress, [0.7, 0.75, 0.9], [20, 0, 0], { clamp: true });
+  // All text is 0 opacity at progress = 1 so nothing bleeds into the transition
+  const heroOpacity    = useTransform(scrollYProgress, [0, 0.2, 0.3],             [1, 1, 0]);
 
-  const ctaOpacity = useTransform(scrollYProgress, [0.92, 0.95, 1], [0, 1, 1]);
-  const ctaScale   = useTransform(scrollYProgress, [0.92, 0.95], [0.9, 1]);
+  const splashOpacity  = useTransform(scrollYProgress, [0.28, 0.33, 0.6, 0.68],   [0, 1, 1, 0]);
+  const splashScale    = useTransform(scrollYProgress, [0.28, 0.33, 0.6],          [0.9, 1, 1]);
+  const splashY        = useTransform(scrollYProgress, [0.28, 0.33, 0.6],          [30, 0, 0]);
+
+  const reverseOpacity = useTransform(scrollYProgress, [0.65, 0.7, 0.82, 0.9],    [0, 1, 1, 0]);
+  const reverseScale   = useTransform(scrollYProgress, [0.65, 0.7, 0.82],          [0.95, 1, 1]);
+  const reverseY       = useTransform(scrollYProgress, [0.65, 0.7, 0.82],          [20, 0, 0]);
+
+  const ctaOpacity     = useTransform(scrollYProgress, [0.85, 0.9, 0.95, 1],       [0, 1, 1, 0]);
+  const ctaScale       = useTransform(scrollYProgress, [0.85, 0.9],                [0.9, 1]);
 
   return (
     <div className="relative">
 
-      {/* Hero Text — word reveal + amber glow pulse */}
+      {/* Hero — word reveal + glow */}
       <motion.div
         className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center pointer-events-none w-full px-4"
         style={{ opacity: heroOpacity }}
@@ -59,17 +65,12 @@ export function TextOverlay() {
           }}
         >
           {words.map((word) => (
-            <motion.span
-              key={word}
-              className="block"
-              variants={wordVariant}
-            >
+            <motion.span key={word} className="block" variants={wordVariant}>
               {word}
             </motion.span>
           ))}
         </motion.h1>
 
-        {/* Pulsing glow behind the text */}
         <motion.div
           className="absolute inset-0 -z-10 pointer-events-none"
           animate={{ opacity: [0.4, 0.7, 0.4] }}
